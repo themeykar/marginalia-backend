@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Book
+from .models import Book, Note
 
 
 class BookSerializer(serializers.ModelSerializer):
@@ -21,3 +21,11 @@ class BookSerializer(serializers.ModelSerializer):
             'created_at',
         )
         read_only_fields = ('id', 'created_at')
+
+
+class NoteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Note
+        fields = ('id', 'content', 'entry_type', 'created_at')
+        read_only_fields = ('id', 'created_at')
+
