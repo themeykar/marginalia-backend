@@ -19,6 +19,7 @@ note_detail = views.NoteViewSet.as_view({
 })
 
 urlpatterns = [
+    path('books/cover-search/', views.CoverSearchView.as_view(), name='cover-search'),
     path('', include(router.urls)),
     path('books/<int:book_pk>/notes/', note_list, name='book-note-list'),
     path('books/<int:book_pk>/notes/<int:pk>/', note_detail, name='book-note-detail'),

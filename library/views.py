@@ -1,5 +1,9 @@
+import requests as http_requests
+
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .models import Book, Note
 from .serializers import BookSerializer, NoteSerializer
@@ -56,4 +60,47 @@ class NoteViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         book = self._get_parent_book()
         serializer.save(book=book)
+
+
+class CoverSearchView(APIView):
+    """
+    Search Open Library for book covers.
+
+    GET /api/books/cover-search/?q=<query>
+
+    Returns a list of candidates with title, author, and cover_url.
+    Results without a cover image are excluded. Failures and timeouts
+    return an empty list (200), not a 500.
+    """
+
+    def get(self, request):
+        query = request.query_params.get('q', '').strip()
+        if not query:
+            return Response({'results': []})
+
+        try:
+            resp = http_requests.get(
+                'https://openlibrary.org/search.json',
+                params={'q': query, 'limit': 5},
+                timeout=5,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+        except (http_requests.RequestException, ValueError):
+            return Response({'results': []})
+
+        results = []
+        for doc in data.get('docs', []):
+            cover_i = doc.get('cover_i')
+            if not cover_i:
+                continue
+
+            results.append({
+                'title': doc.get('title', ''),
+                'author': ', '.join(doc.get('author_name', [])),
+                'cover_url': f'https://covers.openlibrary.org/b/id/{cover_i}-M.jpg',
+            })
+
+        return Response({'results': results})
+
 
